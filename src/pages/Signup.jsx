@@ -7,7 +7,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 
-const bossPhone = "694124180"; // Remplace par le numéro exact du boss
+const bossPhone = "694124189"; // Remplace par le numéro exact du boss
 
 export default function Signup() {
   const [data, setData] = useState({
@@ -20,9 +20,22 @@ export default function Signup() {
   const navigate = useNavigate();
 
   const handleSignup = async () => {
+    if (!data.name || !data.surname || !data.phone || !data.password) {
+      setError("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    if (data.password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+
+    const email = `${data.phone}@domshop.com`; // Email simulé
+
     try {
-      const email = `${data.phone}@domshop.com`; // Email simulé
+      // Tentative de création du compte
       const res = await createUserWithEmailAndPassword(auth, email, data.password);
+
       const role = data.phone === bossPhone ? 'boss' : 'employee';
 
       await setDoc(doc(db, 'users', res.user.uid), {
@@ -34,17 +47,22 @@ export default function Signup() {
 
       navigate(role === 'boss' ? '/dashboard-boss' : '/app');
     } catch (err) {
+      // Gestion des erreurs Firebase
+      if (err.code === 'auth/email-already-in-use') {
+        setError("Numéro de téléphone déjà utilisé ayant généré une adresse email.");
+      } else {
+        setError("Erreur d'inscription. Veuillez vérifier vos informations.");
+      }
       console.error(err);
-      setError("Erreur d'inscription. Veuillez vérifier vos informations.");
     }
   };
 
   return (
     <div className="min-h-screen flex-col flex items-center justify-center bg-gradient-to-br from-green-100 to-blue-100 px-4">
       <div>
-      <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">Bienvenue Chez DomseHop</h2>
-
+        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">Bienvenue Chez DomseShop</h2>
       </div>
+
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">Créer un compte</h2>
 
