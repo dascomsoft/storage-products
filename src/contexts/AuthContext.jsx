@@ -1,32 +1,25 @@
 
 
-// context/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
-// Créer le contexte
+// Création du contexte
 const AuthContext = createContext();
 
-// Fournisseur du contexte
+// Provider
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
-
-  // 🔐 Inscription
-  const signup = async (email, password, role) => {
-    const res = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", res.user.uid), { role });
-  };
+  const [loading, setLoading] = useState(true);
 
   // 🔐 Connexion
-  const login = async (email, password) => {
+  const login = (email, password) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
@@ -35,42 +28,48 @@ export const AuthProvider = ({ children }) => {
     return signOut(auth);
   };
 
-  // 🎯 Écoute les changements d'authentification
+  // 🎯 Observer Firebase Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
 
       if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setUserRole(docSnap.data().role);
-        } else {
+        try {
+          const docSnap = await getDoc(doc(db, "users", user.uid));
+          if (docSnap.exists()) {
+            setUserRole(docSnap.data().role);
+          } else {
+            setUserRole(null);
+          }
+        } catch (error) {
+          console.error("Erreur récupération rôle :", error);
           setUserRole(null);
         }
       } else {
         setUserRole(null);
       }
+
+      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
-  // Valeur du contexte
   const value = {
     currentUser,
     userRole,
-    signup,
+    loading,
     login,
     logout,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
 
-// Hook personnalisé
+// Hook
 export const useAuth = () => useContext(AuthContext);
+

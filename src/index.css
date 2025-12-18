@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+
+/* Styles d'impression */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print\:p-0, 
+  .print\:p-0 * {
+    visibility: visible;
+  }
+  
+  .print\:p-0 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Masquer les boutons à l'impression */
+  button {
+    display: none !important;
+  }
+  
+  /* Améliorer les tables pour l'impression */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+  }
+  
+  th, td {
+    border: 1px solid #000;
+    padding: 4px;
+  }
+}
